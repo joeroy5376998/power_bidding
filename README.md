@@ -15,19 +15,20 @@ Design an agent for bidding power to minimize your electricity bill
 ## LSTM model
 以前一天的產電、用電資料來預測未來一天的產電、用電資料。
 模型架構：
-<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/model_structure.PNG" width="100" height="100"><br/>
+
+<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/model_structure.PNG" width="500" height="500"><br/>
 
 訓練結果：
 1. 產電資料預測
 
-<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/generation.png" width="50" height="50"><br/>
+<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/generation.png" width="500" height="500"><br/>
 
 2. 用電資料預測
 
-<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/consumption.png" width="50" height="50"><br/>
+<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/consumption.png" width="500" height="500"><br/>
 
 3. 剩餘可用電量預測(產電減用電)
 
-<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/diff.png" width="50" height="50"><br/>
+<img src="https://github.com/joeroy5376998/power_bidding/blob/main/image/diff.png" width="500" height="500"><br/>
 
 ## 競標策略
