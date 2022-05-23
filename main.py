@@ -1,4 +1,3 @@
-
 # You should not modify this part.
 from numpy import NaN
 
@@ -24,6 +23,8 @@ def output(path, data):
 def read_data(cons, gene, bid):
     df_cons = pd.read_csv(cons)
     df_gene = pd.read_csv(gene)
+    diff = df_gene['generation'] - df_cons['consumption']
+    df_diff = pd.DataFrame(diff)
     
     # check bidreult exist 
     bid_file = Path(bid)
@@ -40,16 +41,20 @@ def read_data(cons, gene, bid):
     date = pd.to_datetime(df_cons['time'], format='%Y-%m-%d %H:%M:%S')
     last_day = date.iloc[-1]
 
-    return df_cons, df_gene, df_bid, last_day
+    return df_diff, df_bid, last_day
 
 def Model():
+    input_dim = 24*7
+    output_dim = 24
     LR = 0.001
     # model
-    model = Sequential()
-    model.add(LSTM(128, activation = "relu", return_sequences = True, input_shape = (24, 1)))
-    model.add(Dropout(0.2))
-    model.add(LSTM(128, activation = "relu", return_sequences = True))
-    model.add(TimeDistributed(Dense(1)))
+    # model
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(256, activation='relu',input_shape=(1,input_dim)),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(output_dim, activation='sigmoid')
+        ])
     # optimizer
     opt = keras.optimizers.Adam(learning_rate=LR)
     model.compile(optimizer = opt, loss = 'mse')
@@ -57,44 +62,30 @@ def Model():
 
     return model
 
-def predict(gene, cons):
+def predict(diff):
     # data preprocess
     scalar = MinMaxScaler(feature_range=(0,1))
-    generation = gene['generation'][-24:]
-    consumption = cons['consumption'][-24:]
     # reshape for MinMaxScaler
-    generation = generation.to_numpy()
-    consumption = consumption.to_numpy()
-    generation = np.reshape(generation,(generation.shape[0],1))
-    consumption = np.reshape(consumption,(generation.shape[0],1))
+    diff = diff.to_numpy()
+    diff = np.reshape(diff,(diff.shape[0],1))
     # normalization
-    generation = scalar.fit_transform(generation)
-    consumption = scalar.fit_transform(consumption)
-    # reshape for lstm
-    generation = np.reshape(generation,(1,generation.shape[0],1))
-    consumption = np.reshape(consumption,(1,consumption.shape[0],1))
+    diff = scalar.fit_transform(diff)
+    # reshape for model input
+    diff = np.reshape(diff,(1,diff.shape[0]))
+    print('model input',diff.shape)
 
     
-    # predict generation
-    generation_model = Model()
-    generation_model.load_weights('generation_model.h5')
-    predict_gene = generation_model.predict(generation)
-    predict_gene = predict_gene.reshape(predict_gene.shape[1],predict_gene.shape[0])
-    predict_gene = scalar.inverse_transform(predict_gene)
-
-    # predict consumption
-    consumption_model = Model()
-    consumption_model.load_weights('consumption_model.h5')
-    predict_cons = consumption_model.predict(consumption)
-    predict_cons = predict_cons.reshape(predict_cons.shape[1],predict_cons.shape[0])
-    predict_cons = scalar.inverse_transform(predict_cons)
-
-    predict_diff = predict_gene - predict_cons
+    # predict
+    model = Model()
+    model.load_weights('model.h5')
+    predict = model.predict(diff)
+    predict = predict.reshape(predict.shape[1],predict.shape[0])
+    predict = scalar.inverse_transform(predict)
     
-    # plt.plot(predict_diff)
-    # plt.show()
+    #plt.plot(predict)
+    #plt.show()
 
-    return predict_diff
+    return predict
 
 
 def action(diff, bid, last_day):
@@ -129,32 +120,42 @@ def action(diff, bid, last_day):
 
 def targetPrice(day, bid, status):
     # 定價
+    basic_sell_price = 1.5
+    basic_buy_price = 2.5
+
+    day = day.strftime('%Y-%m-%d %H:%M:%S')
+
     if not ((bid['time']==day).any()):
-        price = 3
+        if status=='sell':
+            price = basic_sell_price
+        else:
+            price = basic_buy_price
     else:
-        pre_action = bid.loc[day]['action']
-        pre_result = bid.loc[day]['status']
-        pre_price = bid.loc[day]['trade_price']
+        pre = bid.loc[bid['time']==day]
+        pre_action = pre['action'].mode()[0]
+        pre_result = pre['status'].mode()[0]
+        pre_price = pre['trade_price'].mode()[0]
+        
         if status=='sell':
             if pre_action=='sell':
                 if pre_result=='未成交':
-                    price = pre_price - 0.5
+                    price = pre_price - 0.1
                 else:
-                    price = pre_price + 0.5
+                    price = pre_price + 0.1
             else:
-                price = 4
+                price = basic_sell_price
         else: # buy
             if pre_action=='buy':
                 if pre_result=='未成交':
-                    price = pre_price + 0.5
+                    price = pre_price + 0.1
                 else:
-                    price = pre_price - 0.5
+                    price = pre_price - 0.1
             else:
-                price = 4
+                price = basic_buy_price
                 
     # 防止價格過低或過高
-    lowest = 2
-    highest = 6
+    lowest = 1.0
+    highest = 3.5
     if price < lowest:
         price = lowest
     if price > highest:
@@ -171,23 +172,24 @@ if __name__ == "__main__":
     # make result reprodicible
     from numpy.random import seed
     seed(1)
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # 關掉 GPU
     import tensorflow as tf
     tf.random.set_seed(1)
     # other
     import pandas as pd
     import numpy as np
     import matplotlib.pyplot as plt
-    import os
     from pathlib import Path
     from sklearn.preprocessing import MinMaxScaler
 
     args = config()
 
-    consumption, generation, bidresult, last_day = read_data(args.consumption,\
+    diff, bidresult, last_day = read_data(args.consumption,\
         args.generation, args.bidresult)
     
     # 預測未來一天的 consumptioin 及 generation data，並計算每小時多餘產電量
-    diff = predict(generation, consumption)
+    diff = predict(diff)
 
     data = action(diff, bidresult, last_day) # bid action array
     output(args.output, data)
