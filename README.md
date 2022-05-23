@@ -20,6 +20,7 @@ Design an agent for bidding power to minimize your electricity bill
 
 ## 競標策略
 因為模型的輸出為預測未來24小時的產電、用電量差異，因此設定每一小時做一次交易。
+
 若沒有 bidresult.csv 可以參考，則分別設定買價及賣價：
 sell = 1.5
 buy = 2.5
