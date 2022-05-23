@@ -8,7 +8,7 @@ Design an agent for bidding power to minimize your electricity bill
 4. output.csv：未來一天的競標動作(每小時為單位)
 5. model.h5：預測未來一天產用電資料差的 model weights
 
-## LSTM model
+## Model
 經過實驗發現，預測產用電量差異的準確度優於單純預測產電或是用電資料。因此利用前七天的產電、用電資料差來預測未來一天的產電、用電資料差。
 
 模型採用 mlp model，架構如下：
