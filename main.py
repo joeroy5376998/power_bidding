@@ -71,17 +71,15 @@ def predict(diff):
     # normalization
     diff = scalar.fit_transform(diff)
     # reshape for model input
-    diff = np.reshape(diff,(1,diff.shape[0]))
-    print('model input',diff.shape)
+    diff = np.reshape(diff,(-1,1,diff.shape[0]))
 
     
     # predict
     model = Model()
     model.load_weights('model.h5')
     predict = model.predict(diff)
-    predict = predict.reshape(predict.shape[1],predict.shape[0])
+    predict = predict.reshape(24,1)
     predict = scalar.inverse_transform(predict)
-    
     #plt.plot(predict)
     #plt.show()
 
