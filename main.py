@@ -119,7 +119,7 @@ def action(diff, bid, last_day):
 def targetPrice(day, bid, status):
     # 定價
     basic_sell_price = 1.5
-    basic_buy_price = 2.5
+    basic_buy_price = 2.53
 
     day = day.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -137,23 +137,23 @@ def targetPrice(day, bid, status):
         if status=='sell':
             if pre_action=='sell':
                 if pre_result=='未成交':
-                    price = pre_price - 0.1
+                    price = pre_price - 0.01
                 else:
-                    price = pre_price + 0.1
+                    price = pre_price + 0.01
             else:
                 price = basic_sell_price
         else: # buy
             if pre_action=='buy':
                 if pre_result=='未成交':
-                    price = pre_price + 0.1
+                    price = pre_price + 0.01
                 else:
-                    price = pre_price - 0.1
+                    price = pre_price - 0.01
             else:
                 price = basic_buy_price
                 
     # 防止價格過低或過高
     lowest = 1.0
-    highest = 3.5
+    highest = 3.0
     if price < lowest:
         price = lowest
     if price > highest:
