@@ -118,8 +118,8 @@ def action(diff, bid, last_day):
 
 def targetPrice(day, bid, status):
     # 定價
-    basic_sell_price = 1.5
-    basic_buy_price = 2.53
+    basic_sell_price = 1.55
+    basic_buy_price = 2.55
 
     day = day.strftime('%Y-%m-%d %H:%M:%S')
 
