@@ -29,10 +29,10 @@ def read_data(cons, gene, bid):
     # check bidreult exist 
     bid_file = Path(bid)
     if bid_file.is_file():
-        # print('bidresult file exist')
+        #print('bidresult file exist')
         df_bid = pd.read_csv(bid)
     else:
-        # print('bidresult file do not exist')
+        #print('bidresult file do not exist')
         col = ['time','acion','target_price','target_volume',\
         'trade_price','trade_volume','status']
         df_bid = pd.DataFrame(columns=col)
@@ -98,14 +98,15 @@ def action(diff, bid, last_day):
     # bid strategy
     for i in range(24):
         day = df['time'].iloc[i]
+        yesterday = day - pd.to_timedelta(1, unit='d')
         if diff[i] > 0:
             df.at[i, 'action'] = 'sell'
             df.at[i, 'target_volume'] = diff[i][0]
-            df.at[i, 'target_price'] = targetPrice(day,bid,'sell')
+            df.at[i, 'target_price'] = targetPrice(yesterday,bid,'sell')
         elif diff[i] < 0:
             df.at[i, 'action'] = 'buy'
             df.at[i, 'target_volume'] = -diff[i][0]
-            df.at[i, 'target_price'] = targetPrice(day,bid,'buy')
+            df.at[i, 'target_price'] = targetPrice(yesterday,bid,'buy')
         else:
             pass
 
@@ -119,7 +120,7 @@ def action(diff, bid, last_day):
 def targetPrice(day, bid, status):
     # 定價
     basic_sell_price = 1.55
-    basic_buy_price = 2.55
+    basic_buy_price = 2.5
 
     day = day.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -152,8 +153,8 @@ def targetPrice(day, bid, status):
                 price = basic_buy_price
                 
     # 防止價格過低或過高
-    lowest = 1.0
-    highest = 3.0
+    lowest = 1.5
+    highest = 2.53
     if price < lowest:
         price = lowest
     if price > highest:
